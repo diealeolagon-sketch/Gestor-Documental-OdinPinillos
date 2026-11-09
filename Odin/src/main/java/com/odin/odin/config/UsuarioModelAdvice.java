@@ -110,6 +110,11 @@ public class UsuarioModelAdvice {
         return tieneAutoridad("admin_usuarios");
     }
 
+    @ModelAttribute("esAdmin")
+    public boolean esAdmin() {
+        return tieneAutoridad("ROLE_ADMIN", "ROLE_ROOT", "ROLE_ADMINISTRADOR", "admin_usuarios");
+    }
+
     @ModelAttribute("puedeRoles")
     public boolean puedeRoles() {
         return tieneAutoridad("admin_roles");

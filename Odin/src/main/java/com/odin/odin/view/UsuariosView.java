@@ -4,8 +4,10 @@ import com.odin.odin.model.Dependencias;
 import com.odin.odin.model.Roles;
 import com.odin.odin.model.Usuarios;
 import com.odin.odin.repository.DependenciasRepository;
+import com.odin.odin.repository.LogAccesosRepository;
 import com.odin.odin.repository.RolesRepository;
 import com.odin.odin.repository.UsuariosRepository;
+import com.odin.odin.service.LogCleanupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,7 @@ import java.util.Map;
 @Controller
 public class UsuariosView {
     private static final int PAGE_SIZE = 10;
+    private static final int LOGS_PAGE_SIZE = 15;
 
     @Autowired
     private UsuariosRepository usuariosRepository;
@@ -32,6 +35,12 @@ public class UsuariosView {
 
     @Autowired
     private DependenciasRepository dependenciasRepository;
+
+    @Autowired
+    private LogAccesosRepository logAccesosRepository;
+
+    @Autowired
+    private LogCleanupService logCleanupService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -48,28 +57,32 @@ public class UsuariosView {
 
         String b = (buscar != null && !buscar.isBlank()) ? buscar.trim() : null;
         String t = (tipoId != null && !tipoId.isBlank() && !"Todos los tipos".equalsIgnoreCase(tipoId)) ? tipoId.trim() : null;
-        String e = (estado != null && !estado.isBlank() && !"Estado".equalsIgnoreCase(estado) && !"Todos".equalsIgnoreCase(estado)) ? estado.trim() : null;
-        Long dep = (idDependencia != null && idDependencia > 0) ? idDependencia : null;
+        String e = (estado != null && !estado.isBlank() && !"Todos los estados".equalsIgnoreCase(estado)) ? estado.trim() : null;
 
-        Page<Usuarios> pagina = usuariosRepository.buscarConFiltros(b, t, e, dep, pageable);
-        model.addAttribute("usuarios", pagina.getContent());
-        model.addAttribute("page", pagina);
-        model.addAttribute("currentPage", pagina.getNumber());
-        model.addAttribute("totalPages", Math.max(pagina.getTotalPages(), 1));
-        model.addAttribute("totalElements", pagina.getTotalElements());
+        Page<Usuarios> usuariosPage = usuariosRepository.buscarConFiltros(b, t, e, idDependencia, pageable);
 
-        // Parámetros de filtros para preservar en el formulario
-        model.addAttribute("buscar", buscar != null ? buscar : "");
-        model.addAttribute("tipoId", tipoId != null ? tipoId : "");
-        model.addAttribute("estado", estado != null ? estado : "");
+        model.addAttribute("usuariosPage", usuariosPage);
+        model.addAttribute("usuarios", usuariosPage.getContent());
+        model.addAttribute("listaUsuarios", usuariosPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", usuariosPage.getTotalPages());
+        model.addAttribute("totalElements", usuariosPage.getTotalElements());
+
+        // Parámetros de filtros para mantenerlos en el formulario y paginador
+        model.addAttribute("buscar", buscar);
+        model.addAttribute("tipoId", tipoId);
+        model.addAttribute("estado", estado);
         model.addAttribute("idDependencia", idDependencia);
+
+        // Catálogos para los selects del formulario
+        model.addAttribute("listaRoles", rolesRepository.findAll());
         model.addAttribute("listaDependencias", dependenciasRepository.findAll());
 
-        // Mapas para mostrar nombres de rol y dependencia en la tabla
+        // Mapas para lookup rápido de nombres de rol y dependencia en la tabla
         Map<Long, String> nombresRoles = new HashMap<>();
         rolesRepository.findAll().forEach(r -> {
             if (r.getId_rol() != null) {
-                String nombre = (r.getNombre() != null && !r.getNombre().isBlank()) ? r.getNombre() : r.getRol();
+                String nombre = r.getNombre() != null ? r.getNombre() : r.getRol();
                 nombresRoles.put(r.getId_rol(), nombre != null ? nombre : ("Rol #" + r.getId_rol()));
             }
         });
@@ -82,8 +95,45 @@ public class UsuariosView {
         });
         model.addAttribute("nombresRoles", nombresRoles);
         model.addAttribute("nombresDep", nombresDep);
+        model.addAttribute("activeTab", "usuarios");
 
         return "usuarios/usuarios";
+    }
+
+    @GetMapping("/view/usuarios/logs")
+    public String logs(@RequestParam(value = "buscar", required = false) String buscar,
+                       @RequestParam(value = "accion", required = false) String accion,
+                       @RequestParam(value = "exito", required = false) Boolean exito,
+                       @RequestParam(defaultValue = "0") int page,
+                       Model model) {
+        if (page < 0) page = 0;
+        Pageable pageable = PageRequest.of(page, LOGS_PAGE_SIZE);
+
+        String b = (buscar != null && !buscar.isBlank()) ? buscar.trim() : null;
+        String a = (accion != null && !accion.isBlank() && !"TODAS".equalsIgnoreCase(accion)) ? accion.trim() : null;
+
+        Page<LogAccesosRepository.LogAccesoDTO> logsPage = logAccesosRepository.buscarLogs(b, a, exito, pageable);
+
+        model.addAttribute("logsPage", logsPage);
+        model.addAttribute("logs", logsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", logsPage.getTotalPages());
+        model.addAttribute("totalElements", logsPage.getTotalElements());
+
+        // Parámetros de filtros
+        model.addAttribute("buscar", buscar);
+        model.addAttribute("accion", accion);
+        model.addAttribute("exito", exito);
+        model.addAttribute("activeTab", "logs");
+
+        return "usuarios/usuariosLogs";
+    }
+
+    @PostMapping("/view/usuarios/logs/depurar")
+    public String depurarLogs(@RequestParam(defaultValue = "90") int dias, RedirectAttributes ra) {
+        int eliminados = logCleanupService.limpiarLogsManual(dias);
+        ra.addFlashAttribute("success", "Depuración completada: se eliminaron " + eliminados + " registros de movimientos anteriores a " + dias + " días.");
+        return "redirect:/view/usuarios/logs";
     }
 
     @GetMapping("/view/usuarios/form")

@@ -2,6 +2,7 @@ package com.odin.odin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @SpringBootApplication
+@EnableScheduling
 public class OdinApplication {
 
 	public static void main(String[] args) {
