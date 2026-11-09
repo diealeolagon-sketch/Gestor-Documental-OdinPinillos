@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Movimientos | ODIN</title>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    
+    <link rel="stylesheet" th:href="@{/css/globals.css}">
+    <link rel="stylesheet" th:href="@{/css/styleguide.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/odin.css}">
+    <link rel="stylesheet" th:href="@{/css/odin-dark.css}">
+</head>
+<body class="bg-[#f5f6f8] text-slate-800">
+
+<div class="min-h-screen flex">
+
+    <!-- SIDEBAR con menú responsive -->
+    <div th:replace="~{fragments/layout :: sidebar('usuarios')}"></div>
+
+    <!-- Overlay móvil -->
+    <div class="fixed inset-0 bg-black/40 z-20 hidden" id="overlay" aria-hidden="true"></div>
+
+    <!-- CONTENIDO -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+        <!-- TOPBAR -->
+        <div th:replace="~{fragments/layout :: topbar('Gestión de Usuarios')}"></div>
+
+        <main class="px-4 md:px-8 py-6 flex-1">
+
+            <!-- ENCABEZADO -->
+            <section class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                        <h1 class="odin-page-title">
+                            Gestión de Usuarios
+                        </h1>
+                        <p class="text-sm text-slate-500 mt-2">
+                            Auditoría de inicios de sesión, intentos de acceso y eventos de seguridad.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2.5">
+                        <button type="button"
+                                onclick="document.getElementById('modalDepurar').classList.remove('hidden')"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm font-bold text-amber-800 shadow-xs hover:bg-amber-100 transition">
+                            🧹 Depurar historial
+                        </button>
+                        <a th:href="@{/view/usuarios}"
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition">
+                            ← Volver a Usuarios
+                        </a>
+                        <a th:href="@{/view/usuarios/form}"
+                           class="inline-flex items-center justify-center rounded-lg bg-[#2fa300] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#248400] transition">
+                            Nuevo usuario
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MENSAJE DE ÉXITO / DEPURACIÓN -->
+            <div th:if="${success}" class="mb-5">
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-800 shadow-xs flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span>✓</span>
+                        <span th:text="${success}">Operación realizada con éxito</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑAS DE NAVEGACIÓN -->
+            <div class="flex border-b border-slate-200 mb-6 gap-6">
+                <a th:href="@{/view/usuarios}"
+                   class="pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
+                    <span>Usuarios Registrados</span>
+                </a>
+                <a th:href="@{/view/usuarios/logs}"
+                   class="pb-3 text-sm font-bold flex items-center gap-2 border-b-2 text-[#2fa300] border-[#2fa300]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                    </svg>
+                    <span>Registro de Movimientos</span>
+                    <span class="text-xs bg-green-100 text-[#2fa300] px-2 py-0.5 rounded-full font-bold"
+                          th:text="${totalElements != null ? totalElements : '0'}">0</span>
+                </a>
+            </div>
+
+            <!-- FORMULARIO DE FILTROS -->
+            <form method="get" th:action="@{/view/usuarios/logs}" id="formFiltrosLogs" class="mb-5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    
+                    <!-- Búsqueda rápida -->
+                    <div class="md:col-span-2 relative">
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Buscar por usuario o IP</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">🔍</span>
+                            <input type="text"
+                                   name="buscar"
+                                   th:value="${buscar}"
+                                   placeholder="Nombre, cédula, correo o IP..."
+                                   class="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100">
+                        </div>
+                    </div>
+
+                    <!-- Filtro Tipo de Acción -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Tipo de acción</label>
+                        <select name="accion" onchange="document.getElementById('formFiltrosLogs').submit()"
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 px-3 text-sm text-slate-700 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100">
+                            <option value="">Todas las acciones</option>
+                            <option value="LOGIN" th:selected="${accion == 'LOGIN'}">Inicio de Sesión (LOGIN)</option>
+                            <option value="LOGIN_FALLIDO" th:selected="${accion == 'LOGIN_FALLIDO'}">Acceso Fallido (LOGIN_FALLIDO)</option>
+                            <option value="LOGOUT" th:selected="${accion == 'LOGOUT'}">Cierre de Sesión (LOGOUT)</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Resultado -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Resultado</label>
+                        <select name="exito" onchange="document.getElementById('formFiltrosLogs').submit()"
+                                class="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 px-3 text-sm text-slate-700 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100">
+                            <option value="">Todos los resultados</option>
+                            <option value="true" th:selected="${exito == true}">Exitoso</option>
+                            <option value="false" th:selected="${exito == false}">Fallido / Bloqueado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-2.5 px-1">
+                    <span class="text-xs text-slate-500">
+                        Mostrando <strong th:text="${#lists.size(logs)}">0</strong> de <strong th:text="${totalElements}">0</strong> movimientos registrados
+                    </span>
+                    <div class="flex gap-2">
+                        <button type="submit"
+                                class="rounded-md bg-[#2fa300] text-white px-4 py-1.5 text-xs font-bold hover:bg-[#248400] transition shadow-xs">
+                            Filtrar
+                        </button>
+                        <a th:href="@{/view/usuarios/logs}"
+                           class="rounded-md bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-semibold hover:bg-slate-200 transition">
+                            Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <!-- TABLA DE MOVIMIENTOS -->
+            <section class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                            <tr>
+                                <th class="px-5 py-3.5">Fecha y Hora</th>
+                                <th class="px-5 py-3.5">Usuario / Identificación</th>
+                                <th class="px-5 py-3.5">Acción</th>
+                                <th class="px-5 py-3.5">Dirección IP</th>
+                                <th class="px-5 py-3.5">Navegador / Dispositivo</th>
+                                <th class="px-5 py-3.5">Detalle / Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+
+                            <!-- FILA DE LOG -->
+                            <tr th:each="log : ${logs}" class="hover:bg-slate-50/70 transition">
+
+                                <!-- Fecha y hora -->
+                                <td class="px-5 py-3.5 whitespace-nowrap text-xs font-medium text-slate-600">
+                                    <span th:text="${log.fecha != null ? #temporals.format(log.fecha, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}">
+                                        2026-11-09 14:30:00
+                                    </span>
+                                </td>
+
+                                <!-- Usuario / Identificación -->
+                                <td class="px-5 py-3.5">
+                                    <div th:if="${log.nombre_usuario != null}">
+                                        <div class="font-bold text-slate-800 text-xs" th:text="${log.nombre_usuario}">
+                                            Nombre Usuario
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5"
+                                             th:text="'C.C. ' + (${log.num_identificacion != null ? log.num_identificacion : 'N/A'}) + ' · ' + (${log.correo_usuario != null ? log.correo_usuario : ''})">
+                                            C.C. 123456 · correo@sena.edu.co
+                                        </div>
+                                    </div>
+                                    <div th:if="${log.nombre_usuario == null}" class="text-xs">
+                                        <span class="inline-flex items-center gap-1 font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 text-[11px]">
+                                            ⚠️ No identificado
+                                        </span>
+                                        <div class="text-[11px] text-slate-400 mt-0.5" th:if="${log.motivo != null}">
+                                            Intento: <span class="font-mono text-slate-600" th:text="${log.motivo}">login_user</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Acción y Estado -->
+                                <td class="px-5 py-3.5 whitespace-nowrap">
+                                    <div class="flex items-center gap-2">
+                                        <!-- Badges por acción -->
+                                        <span th:if="${log.accion == 'LOGIN' and log.exito}"
+                                              class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Inicio de sesión
+                                        </span>
+
+                                        <span th:if="${log.accion == 'LOGIN_FALLIDO' or (log.accion == 'LOGIN' and !log.exito)}"
+                                              class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Acceso fallido
+                                        </span>
+
+                                        <span th:if="${log.accion == 'LOGOUT'}"
+                                              class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 border border-slate-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                            Cierre de sesión
+                                        </span>
+
+                                        <span th:if="${log.accion != 'LOGIN' and log.accion != 'LOGIN_FALLIDO' and log.accion != 'LOGOUT'}"
+                                              class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200"
+                                              th:text="${log.accion}">
+                                            ACCIÓN
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- IP -->
+                                <td class="px-5 py-3.5 whitespace-nowrap text-xs font-mono text-slate-700">
+                                    <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
+                                          th:text="${log.ip != null ? log.ip : '0.0.0.0'}">
+                                        127.0.0.1
+                                    </span>
+                                </td>
+
+                                <!-- User Agent -->
+                                <td class="px-5 py-3.5 text-xs text-slate-500 max-w-xs truncate"
+                                    th:title="${log.user_agent}"
+                                    th:text="${log.user_agent != null ? log.user_agent : 'N/D'}">
+                                    Mozilla/5.0...
+                                </td>
+
+                                <!-- Detalle / Motivo -->
+                                <td class="px-5 py-3.5 text-xs">
+                                    <span th:if="${log.exito}" class="text-emerald-700 font-medium">
+                                        Operación autorizada
+                                    </span>
+                                    <span th:if="${!log.exito}" class="text-rose-600 font-medium"
+                                          th:text="${log.motivo != null ? log.motivo : 'Credenciales o acceso denegado'}">
+                                        Credenciales inválidas
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                            <!-- ESTADO VACÍO -->
+                            <tr th:if="${#lists.isEmpty(logs)}">
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xl mb-3">
+                                            🛡️
+                                        </div>
+                                        <p class="text-sm font-semibold text-slate-600">No se encontraron movimientos de acceso</p>
+                                        <p class="text-xs text-slate-400 mt-1">No hay registros de log que coincidan con los filtros seleccionados.</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINADOR REAL DE 15 REGISTROS POR PÁGINA -->
+                <div th:if="${totalPages > 1}" class="flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 px-5 py-3.5 gap-3 bg-slate-50/50">
+                    <p class="text-xs text-slate-500">
+                        Página <strong th:text="${currentPage + 1}">1</strong> de <strong th:text="${totalPages}">1</strong>
+                        (<span th:text="${totalElements}">0</span> movimientos en total)
+                    </p>
+
+                    <div class="flex items-center gap-1.5">
+
+                        <!-- Botón Anterior -->
+                        <a th:if="${currentPage > 0}"
+                           th:href="@{/view/usuarios/logs(page=${currentPage - 1}, buscar=${buscar}, accion=${accion}, exito=${exito})}"
+                           class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
+                            ← Anterior
+                        </a>
+                        <span th:if="${currentPage <= 0}"
+                              class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                            ← Anterior
+                        </span>
+
+                        <!-- Números de página -->
+                        <div class="hidden sm:flex items-center gap-1">
+                            <span th:each="p : ${#numbers.sequence(0, totalPages - 1)}"
+                                  th:if="${p >= currentPage - 2 and p <= currentPage + 2}">
+                                <a th:if="${p != currentPage}"
+                                   th:href="@{/view/usuarios/logs(page=${p}, buscar=${buscar}, accion=${accion}, exito=${exito})}"
+                                   th:text="${p + 1}"
+                                   class="rounded-lg border border-slate-200 bg-white w-7 h-7 flex items-center justify-center text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
+                                    1
+                                </a>
+                                <span th:if="${p == currentPage}"
+                                      th:text="${p + 1}"
+                                      class="rounded-lg bg-[#2fa300] text-white w-7 h-7 flex items-center justify-center text-xs font-bold shadow-xs">
+                                    1
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- Botón Siguiente -->
+                        <a th:if="${currentPage < totalPages - 1}"
+                           th:href="@{/view/usuarios/logs(page=${currentPage + 1}, buscar=${buscar}, accion=${accion}, exito=${exito})}"
+                           class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-xs">
+                            Siguiente →
+                        </a>
+                        <span th:if="${currentPage >= totalPages - 1}"
+                              class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                            Siguiente →
+                        </span>
+
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- MODAL DEPURAR HISTORIAL -->
+<div id="modalDepurar" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden" aria-hidden="true">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                🧹 Depuración de Movimientos
+            </h3>
+            <button type="button" onclick="document.getElementById('modalDepurar').classList.add('hidden')"
+                    class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        </div>
+        <form method="post" th:action="@{/view/usuarios/logs/depurar}" class="mt-4 space-y-4">
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Esta acción elimina del historial los registros antiguos para liberar espacio en la base de datos y optimizar el almacenamiento.
+            </p>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">
+                    Eliminar registros anteriores a:
+                </label>
+                <select name="dias" class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100">
+                    <option value="30">Más de 30 días de antigüedad</option>
+                    <option value="60">Más de 60 días de antigüedad</option>
+                    <option value="90" selected>Más de 90 días de antigüedad (Recomendado)</option>
+                    <option value="180">Más de 180 días (6 meses)</option>
+                    <option value="365">Más de 1 año</option>
+                </select>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[11px] text-amber-800 leading-snug">
+                ⚠️ <strong>Nota:</strong> Los movimientos dentro del período seleccionado se conservarán. Esta acción es irreversible.
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="document.getElementById('modalDepurar').classList.add('hidden')"
+                        class="rounded-lg bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        onclick="return confirm('¿Está seguro de que desea depurar los registros de movimientos anteriores al plazo seleccionado?')"
+                        class="rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 transition shadow-xs">
+                    Confirmar y depurar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden');
+    }
+</script>
+
+</body>
+</html>
